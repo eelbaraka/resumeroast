@@ -36,6 +36,7 @@ export default function HomePage() {
       const result = await res.json()
       clearInterval(iv); setProgress(100)
       localStorage.setItem("roastResult", JSON.stringify(result))
+      localStorage.setItem("roastMeta", JSON.stringify({ name: file.name, size: file.size }))
       setTimeout(() => router.push("/results"), 400)
     } catch (err: unknown) {
       clearInterval(iv); setProgress(0)
