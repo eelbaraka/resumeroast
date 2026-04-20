@@ -14,9 +14,8 @@ function extractTextFromPDF(buffer: Buffer): string {
     let parenMatch
     while ((parenMatch = parenRegex.exec(block)) !== null) {
       const text = parenMatch[1]
-        .replace(/\\n/g, "\n").replace(/\\r/g, "\r")
-        .replace(/\\t/g, "\t").replace(/\\\(/g, "(")
-        .replace(/\\\)/g, ")").replace(/\\\\/g, "\\")
+        .replace(/\\n/g,"\n").replace(/\\r/g,"\r").replace(/\\t/g,"\t")
+        .replace(/\\\(/g,"(").replace(/\\\)/g,")").replace(/\\\\/g,"\\")
       if (text.trim()) textParts.push(text)
     }
     const hexRegex = /<([0-9A-Fa-f]+)>/g
@@ -51,7 +50,7 @@ export async function POST(req: NextRequest) {
     const resumeText = extractTextFromPDF(buffer)
 
     if (!resumeText || resumeText.trim().length < 30) {
-      return NextResponse.json({ error: "Could not read your PDF. Please use a text-based PDF." }, { status: 400 })
+      return NextResponse.json({ error: "Could not read your PDF. Please use a text-based PDF, not a scanned image." }, { status: 400 })
     }
 
     const prompt = `You are a brutally honest but genuinely helpful career coach. Analyze this resume and provide honest, specific, actionable feedback.
@@ -59,18 +58,18 @@ export async function POST(req: NextRequest) {
 Respond ONLY with a raw JSON object. No markdown, no code blocks, no explanation — just JSON:
 
 {
-  "score": <integer 0-100, honest score — most resumes are 40-70>,
-  "roast_line": "<one sharp, specific sentence capturing the resume's biggest weakness>",
+  "score": <integer 0-100, honest — most resumes score 40-70>,
+  "roast_line": "<one sharp specific sentence capturing the resume's biggest weakness>",
   "sections": [
     { "name": "Clarity", "score": <0-100>, "issue": "<specific problem in THIS resume>", "fix": "<concrete actionable fix>" },
-    { "name": "ATS Score", "score": <0-100>, "issue": "<specific ATS/keyword problem>", "fix": "<specific fix with example>" },
+    { "name": "ATS Score", "score": <0-100>, "issue": "<specific ATS/keyword problem>", "fix": "<specific fix with example keyword>" },
     { "name": "Impact", "score": <0-100>, "issue": "<specific weak language or missing metrics>", "fix": "<before/after example>" },
-    { "name": "Red Flags", "score": <0-100, higher = fewer flags>, "issue": "<specific red flag found>", "fix": "<how to fix it>" }
+    { "name": "Red Flags", "score": <0-100, higher = fewer flags>, "issue": "<specific red flag found>", "fix": "<how to address it>" }
   ],
   "rewrites": [
     "Before: <actual weak bullet from resume> -> After: <stronger version with metrics and action verb>",
-    "Before: <another weak bullet> -> After: <improved version>",
-    "Before: <another weak bullet> -> After: <improved version>"
+    "Before: <another weak bullet> -> After: <improved>",
+    "Before: <another weak bullet> -> After: <improved>"
   ]
 }
 
@@ -82,10 +81,7 @@ ${resumeText.slice(0, 4000)}`
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         max_tokens: 1200,

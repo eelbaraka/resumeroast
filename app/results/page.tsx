@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -7,81 +6,49 @@ interface Section { name: string; score: number; issue: string; fix: string }
 interface RoastResult { score: number; roast_line: string; sections: Section[]; rewrites: string[] }
 
 function ScoreRing({ score }: { score: number }) {
-  const r = 54, circ = 2 * Math.PI * r
+  const r = 48, circ = 2 * Math.PI * r
   const offset = circ - (score / 100) * circ
-  const color = score < 40 ? "#ef4444" : score < 65 ? "#f97316" : score < 80 ? "#eab308" : "#16a34a"
-  const label = score < 40 ? "Needs Work" : score < 65 ? "Below Average" : score < 80 ? "Good" : "Strong"
-
+  const color = score < 40 ? "#ef4444" : score < 65 ? "#f59e0b" : score < 80 ? "#eab308" : "#22c55e"
+  const label = score < 40 ? "Needs work" : score < 65 ? "Below average" : score < 80 ? "Good" : "Strong"
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-      <div style={{ position: "relative", width: 140, height: 140 }}>
-        <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: "rotate(-90deg)" }}>
-          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--bg-3)" strokeWidth="7" />
-          <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="7"
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+      <div style={{ position:"relative", width:120, height:120 }}>
+        <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform:"rotate(-90deg)" }}>
+          <circle cx="60" cy="60" r={r} fill="none" stroke="var(--bg4)" strokeWidth="7" />
+          <circle cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="7"
             strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-            className="score-ring" style={{ filter: `drop-shadow(0 0 6px ${color}40)` }} />
+            className="ring" style={{ filter:`drop-shadow(0 0 8px ${color}50)` }} />
         </svg>
-        <div style={{
-          position: "absolute", inset: 0, display: "flex",
-          flexDirection: "column", alignItems: "center", justifyContent: "center",
-        }}>
-          <span style={{ fontSize: 34, fontWeight: 700, color: "var(--text-1)", lineHeight: 1, letterSpacing: "-0.03em" }}>
-            {score}
-          </span>
-          <span style={{ fontSize: 11, color: "var(--text-3)", fontFamily: "Geist Mono", marginTop: 2 }}>/ 100</span>
+        <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+          <span className="font-display" style={{ fontSize:32, fontWeight:700, color:"var(--t1)", lineHeight:1, letterSpacing:"-0.03em" }}>{score}</span>
+          <span className="font-mono" style={{ fontSize:10, color:"var(--t3)", marginTop:2 }}>/ 100</span>
         </div>
       </div>
-      <span style={{
-        fontSize: 11, fontWeight: 600, color, fontFamily: "Geist Mono",
-        letterSpacing: "0.08em", textTransform: "uppercase",
-        background: `${color}15`, padding: "3px 10px", borderRadius: 100,
-        border: `1px solid ${color}30`,
-      }}>{label}</span>
+      <span className="font-mono" style={{ fontSize:10, fontWeight:500, color, letterSpacing:"0.07em", textTransform:"uppercase", background:`${color}15`, padding:"3px 10px", borderRadius:100, border:`0.5px solid ${color}30` }}>{label}</span>
     </div>
   )
 }
 
 function SectionCard({ s, i }: { s: Section; i: number }) {
-  const pct = s.score
-  const color = pct < 40 ? "#ef4444" : pct < 65 ? "#f97316" : pct < 80 ? "#eab308" : "#16a34a"
+  const color = s.score < 40 ? "#ef4444" : s.score < 65 ? "#f59e0b" : s.score < 80 ? "#eab308" : "#22c55e"
   return (
-    <div className={`animate-fade-up`} style={{
-      animationDelay: `${i * 0.06}s`,
-      background: "white", border: "1px solid var(--border)",
-      borderRadius: 14, padding: "20px 22px", overflow: "hidden", position: "relative",
-    }}>
-      {/* Score bar accent */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: 3,
-        background: "var(--bg-3)", borderRadius: "14px 14px 0 0",
-      }}>
-        <div style={{
-          width: `${pct}%`, height: "100%", background: color,
-          borderRadius: "14px 14px 0 0", transition: "width 1s ease",
-        }} />
+    <div className="afu" style={{ animationDelay:`${i*0.07}s`, background:"var(--bg2)", border:"0.5px solid var(--border2)", borderRadius:13, overflow:"hidden" }}>
+      <div style={{ height:2, background:"var(--bg4)" }}>
+        <div style={{ width:`${s.score}%`, height:"100%", background:color, borderRadius:2 }} />
       </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, marginTop: 4 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>{s.name}</span>
-        <span style={{
-          fontSize: 11, fontWeight: 700, color,
-          fontFamily: "Geist Mono", background: `${color}12`,
-          padding: "2px 8px", borderRadius: 6, border: `1px solid ${color}25`,
-        }}>{pct}</span>
-      </div>
-
-      <div style={{ marginBottom: 12 }}>
-        <p style={{ fontSize: 11, fontFamily: "Geist Mono", color: "var(--text-3)", marginBottom: 4, letterSpacing: "0.05em" }}>
-          PROBLEM
-        </p>
-        <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.55 }}>{s.issue}</p>
-      </div>
-
-      <div style={{ paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-        <p style={{ fontSize: 11, fontFamily: "Geist Mono", color: "var(--accent)", marginBottom: 4, letterSpacing: "0.05em" }}>
-          FIX
-        </p>
-        <p style={{ fontSize: 13, color: "var(--text-1)", lineHeight: 1.55, fontWeight: 500 }}>{s.fix}</p>
+      <div style={{ padding:"15px 16px" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:11 }}>
+          <span className="font-display" style={{ fontSize:12, fontWeight:600, color:"var(--t1)", letterSpacing:"-0.01em" }}>{s.name}</span>
+          <span className="font-mono" style={{ fontSize:10, fontWeight:700, color, background:`${color}12`, padding:"2px 7px", borderRadius:5, border:`0.5px solid ${color}25` }}>{s.score}</span>
+        </div>
+        <div style={{ marginBottom:10 }}>
+          <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", marginBottom:3, letterSpacing:"0.06em" }}>PROBLEM</p>
+          <p style={{ fontSize:12, color:"var(--t2)", lineHeight:1.55, fontFamily:"Inter,sans-serif" }}>{s.issue}</p>
+        </div>
+        <div style={{ paddingTop:10, borderTop:"0.5px solid var(--border)" }}>
+          <p className="font-mono" style={{ fontSize:9, color:"var(--accent)", marginBottom:3, letterSpacing:"0.06em" }}>FIX</p>
+          <p style={{ fontSize:12, color:"var(--t1)", lineHeight:1.55, fontWeight:500, fontFamily:"Inter,sans-serif" }}>{s.fix}</p>
+        </div>
       </div>
     </div>
   )
@@ -114,168 +81,87 @@ export default function ResultsPage() {
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
+  const navBtn = { fontSize:12, color:"var(--t2)", padding:"6px 14px", borderRadius:8, border:"0.5px solid var(--border2)", background:"var(--bg3)", cursor:"pointer", fontFamily:"Inter,sans-serif" }
+
   if (!mounted || !result) return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ textAlign: "center" }}>
-        <div style={{
-          width: 40, height: 40, border: "2px solid var(--border)",
-          borderTopColor: "var(--accent)", borderRadius: "50%",
-          animation: "spin 0.8s linear infinite", margin: "0 auto 16px",
-        }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ fontSize: 14, color: "var(--text-3)" }}>Loading your results...</p>
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ textAlign:"center" }}>
+        <div className="spin" style={{ width:32, height:32, border:"2px solid var(--border2)", borderTopColor:"var(--accent)", borderRadius:"50%", margin:"0 auto 14px" }} />
+        <p style={{ fontSize:13, color:"var(--t3)", fontFamily:"Inter,sans-serif" }}>Loading your results...</p>
       </div>
     </div>
   )
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      {/* Nav */}
-      <nav style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "18px 32px", borderBottom: "1px solid var(--border)",
-        background: "rgba(250,250,249,0.9)", backdropFilter: "blur(12px)",
-        position: "sticky", top: 0, zIndex: 50,
-      }}>
-        <button onClick={() => router.push("/")} style={{
-          display: "flex", alignItems: "center", gap: 8,
-          background: "none", border: "none", cursor: "pointer", padding: 0,
-        }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8, background: "var(--accent)",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-          }}>🔥</div>
-          <span style={{ fontWeight: 600, fontSize: 15, color: "var(--text-1)", letterSpacing: "-0.02em" }}>
-            ResumeRoast
-          </span>
+    <div style={{ minHeight:"100vh", background:"var(--bg)" }}>
+      <nav style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"15px 28px", borderBottom:"0.5px solid var(--border)", background:"rgba(12,12,11,0.92)", backdropFilter:"blur(16px)", position:"sticky", top:0, zIndex:50 }}>
+        <button onClick={() => router.push("/")} style={{ display:"flex", alignItems:"center", gap:9, background:"none", border:"none", cursor:"pointer", padding:0 }}>
+          <div style={{ width:26, height:26, borderRadius:7, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>🔥</div>
+          <span className="font-display" style={{ fontWeight:700, fontSize:14, color:"var(--t1)", letterSpacing:"-0.02em" }}>ResumeRoast</span>
         </button>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={copy} style={{
-            padding: "7px 14px", borderRadius: 9, border: "1px solid var(--border)",
-            background: "white", cursor: "pointer", fontSize: 13, color: "var(--text-2)",
-            fontFamily: "Geist, sans-serif", fontWeight: 500,
-          }}>
-            {copied ? "✓ Copied" : "Copy score"}
-          </button>
-          <button onClick={() => router.push("/")} style={{
-            padding: "7px 14px", borderRadius: 9, border: "1px solid var(--border)",
-            background: "white", cursor: "pointer", fontSize: 13, color: "var(--text-2)",
-            fontFamily: "Geist, sans-serif", fontWeight: 500,
-          }}>
-            ← New resume
-          </button>
+        <div style={{ display:"flex", gap:8 }}>
+          <button onClick={copy} style={navBtn}>{copied ? "✓ Copied" : "Copy score"}</button>
+          <button onClick={() => router.push("/")} style={navBtn}>← New resume</button>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px 120px" }}>
+      <div style={{ maxWidth:700, margin:"0 auto", padding:"40px 20px 130px" }}>
 
-        {/* Score header */}
-        <div className="animate-fade-up" style={{
-          background: "white", border: "1px solid var(--border)",
-          borderRadius: 20, padding: "40px 36px", marginBottom: 16,
-          display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
-          gap: 24,
-        }}>
+        {/* Score card */}
+        <div className="afu" style={{ background:"var(--bg2)", border:"0.5px solid var(--border2)", borderRadius:16, padding:"36px 28px", marginBottom:14, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", gap:20 }}>
           <ScoreRing score={result.score} />
           <div>
-            <p style={{ fontSize: 11, fontFamily: "Geist Mono", color: "var(--text-3)", letterSpacing: "0.08em", marginBottom: 10 }}>
-              YOUR ROAST
-            </p>
-            <p className="serif" style={{
-              fontSize: "clamp(18px, 3vw, 26px)", fontStyle: "italic",
-              color: "var(--text-1)", lineHeight: 1.4, fontWeight: 400,
-              maxWidth: 520,
-            }}>
+            <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", letterSpacing:"0.08em", marginBottom:8 }}>YOUR ROAST</p>
+            <p className="font-display" style={{ fontSize:"clamp(16px,2.5vw,22px)", fontWeight:600, fontStyle:"italic", color:"var(--t1)", lineHeight:1.4, letterSpacing:"-0.01em", maxWidth:500 }}>
               &ldquo;{result.roast_line}&rdquo;
             </p>
           </div>
-
-          {/* Share row */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-            <button onClick={() => share("linkedin")} style={{
-              padding: "8px 16px", borderRadius: 9, border: "1px solid var(--border)",
-              background: "var(--bg-2)", cursor: "pointer", fontSize: 13,
-              color: "var(--text-2)", fontFamily: "Geist, sans-serif", fontWeight: 500,
-            }}>Share on LinkedIn</button>
-            <button onClick={() => share("x")} style={{
-              padding: "8px 16px", borderRadius: 9, border: "1px solid var(--border)",
-              background: "var(--bg-2)", cursor: "pointer", fontSize: 13,
-              color: "var(--text-2)", fontFamily: "Geist, sans-serif", fontWeight: 500,
-            }}>Share on X</button>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
+            {[{ label:"Share on LinkedIn", p:"linkedin" as const }, { label:"Share on X", p:"x" as const }].map(({ label, p }) => (
+              <button key={p} onClick={() => share(p)} style={{ padding:"8px 16px", borderRadius:9, border:"0.5px solid var(--border2)", background:"var(--bg3)", cursor:"pointer", fontSize:12, color:"var(--t2)", fontFamily:"Inter,sans-serif" }}>{label}</button>
+            ))}
           </div>
         </div>
 
         {/* Breakdown */}
-        <div style={{ marginBottom: 16 }}>
-          <p style={{
-            fontSize: 11, fontFamily: "Geist Mono", color: "var(--text-3)",
-            letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12, paddingLeft: 2,
-          }}>Breakdown</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 10 }}>
-            {result.sections.map((s, i) => <SectionCard key={s.name} s={s} i={i} />)}
-          </div>
+        <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:10, paddingLeft:2 }}>Breakdown</p>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))", gap:8, marginBottom:14 }}>
+          {result.sections.map((sec, i) => <SectionCard key={sec.name} s={sec} i={i} />)}
         </div>
 
         {/* Rewrites */}
-        <div style={{ marginBottom: 16 }}>
-          <p style={{
-            fontSize: 11, fontFamily: "Geist Mono", color: "var(--text-3)",
-            letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12, paddingLeft: 2,
-          }}>Quick wins — rewrites</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {result.rewrites.map((r, i) => {
-              const parts = r.split(/->|→/)
-              const before = parts[0]?.replace(/^Before:/i, "").trim()
-              const after = parts[1]?.replace(/^After:/i, "").trim()
-              return (
-                <div key={i} className="animate-fade-up" style={{
-                  animationDelay: `${i * 0.07}s`,
-                  background: "white", border: "1px solid var(--border)",
-                  borderRadius: 14, overflow: "hidden",
-                }}>
-                  <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", background: "#fff5f5" }}>
-                    <p style={{ fontSize: 10, fontFamily: "Geist Mono", color: "#ef4444", letterSpacing: "0.08em", marginBottom: 6 }}>BEFORE</p>
-                    <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.55 }}>{before || r}</p>
-                  </div>
-                  {after && (
-                    <div style={{ padding: "16px 20px", background: "#f0fdf4" }}>
-                      <p style={{ fontSize: 10, fontFamily: "Geist Mono", color: "#16a34a", letterSpacing: "0.08em", marginBottom: 6 }}>AFTER</p>
-                      <p style={{ fontSize: 13, color: "var(--text-1)", lineHeight: 1.55, fontWeight: 500 }}>{after}</p>
-                    </div>
-                  )}
+        <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:10, paddingLeft:2 }}>Quick wins — rewrites</p>
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {result.rewrites.map((r, i) => {
+            const parts = r.split(/->|→/)
+            const before = parts[0]?.replace(/^Before:/i, "").trim()
+            const after  = parts[1]?.replace(/^After:/i,  "").trim()
+            return (
+              <div key={i} className="afu" style={{ animationDelay:`${i*0.08}s`, background:"var(--bg2)", border:"0.5px solid var(--border2)", borderRadius:13, overflow:"hidden" }}>
+                <div style={{ padding:"14px 16px", background:"rgba(239,68,68,0.05)", borderBottom:"0.5px solid var(--border)" }}>
+                  <p className="font-mono" style={{ fontSize:9, color:"var(--red)", letterSpacing:"0.06em", marginBottom:5 }}>BEFORE</p>
+                  <p style={{ fontSize:13, color:"var(--t2)", lineHeight:1.55, fontFamily:"Inter,sans-serif" }}>{before || r}</p>
                 </div>
-              )
-            })}
-          </div>
+                {after && (
+                  <div style={{ padding:"14px 16px", background:"rgba(34,197,94,0.04)" }}>
+                    <p className="font-mono" style={{ fontSize:9, color:"var(--green)", letterSpacing:"0.06em", marginBottom:5 }}>AFTER</p>
+                    <p style={{ fontSize:13, color:"var(--t1)", lineHeight:1.55, fontWeight:500, fontFamily:"Inter,sans-serif" }}>{after}</p>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {/* Sticky upgrade bar */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 40,
-        borderTop: "1px solid var(--border)",
-        background: "rgba(250,250,249,0.95)", backdropFilter: "blur(16px)",
-        padding: "14px 24px",
-      }}>
-        <div style={{
-          maxWidth: 720, margin: "0 auto",
-          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
-          flexWrap: "wrap",
-        }}>
+      {/* Sticky upgrade */}
+      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:40, borderTop:"0.5px solid var(--border)", background:"rgba(12,12,11,0.96)", backdropFilter:"blur(20px)", padding:"14px 24px" }}>
+        <div style={{ maxWidth:700, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--text-1)", letterSpacing: "-0.01em" }}>
-              Want every section fully rewritten?
-            </p>
-            <p style={{ fontSize: 12, color: "var(--text-3)", marginTop: 2 }}>
-              Deep Roast — full rewrite + cover letter + LinkedIn headline · One-time
-            </p>
+            <p className="font-display" style={{ fontSize:13, fontWeight:700, color:"var(--t1)", letterSpacing:"-0.01em" }}>Want every section fully rewritten?</p>
+            <p style={{ fontSize:11, color:"var(--t3)", marginTop:2, fontFamily:"Inter,sans-serif" }}>Deep Roast — full rewrite + cover letter + LinkedIn headline · One-time</p>
           </div>
-          <a href="mailto:hello@resumeroast.ai?subject=Deep Roast" style={{
-            padding: "11px 22px", borderRadius: 10, border: "none",
-            background: "var(--accent)", color: "white", fontSize: 13,
-            fontWeight: 600, textDecoration: "none", letterSpacing: "-0.01em",
-            whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(255,68,34,0.25)",
-          }}>
+          <a href="mailto:hello@resumeroast.ai?subject=Deep Roast" style={{ padding:"11px 22px", borderRadius:10, border:"none", background:"var(--accent)", color:"white", fontSize:13, fontWeight:700, textDecoration:"none", letterSpacing:"-0.01em", whiteSpace:"nowrap", fontFamily:"DM Sans,sans-serif", boxShadow:"0 2px 12px rgba(255,68,34,0.3)" }}>
             Get Deep Roast — $9
           </a>
         </div>
