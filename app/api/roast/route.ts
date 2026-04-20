@@ -12,19 +12,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 })
     }
 
-    // Convert to buffer
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Extract text from PDF
     let resumeText = ""
     try {
-      // Dynamic import to avoid edge runtime issues
       const pdfParse = (await import("pdf-parse")).default
       const pdfData = await pdfParse(buffer)
       resumeText = pdfData.text
     } catch {
-      // Fallback: basic text extraction from PDF binary
       resumeText = buffer
         .toString("latin1")
         .replace(/[^\x20-\x7E\n\r\t]/g, " ")
@@ -39,7 +35,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Build the prompt
     const prompt = `You are a brutally honest career coach who genuinely wants people to succeed. Roast this resume with sharp wit, but make every critique specific and actionable.
 
 IMPORTANT: Respond ONLY with a raw JSON object. No markdown, no code blocks, no explanation before or after. Just the JSON.
@@ -74,9 +69,9 @@ IMPORTANT: Respond ONLY with a raw JSON object. No markdown, no code blocks, no 
     }
   ],
   "rewrites": [
-    "<Before: [copy an actual weak bullet from their resume] → After: [improved version with metrics and strong verb]>",
-    "<Before: [copy another weak bullet] → After: [improved version]>",
-    "<Before: [copy another weak bullet] → After: [improved version]>"
+    "<Before: [copy an actual weak bullet from their resume] -> After: [improved version with metrics and strong verb]>",
+    "<Before: [copy another weak bullet] -> After: [improved version]>",
+    "<Before: [copy another weak bullet] -> After: [improved version]>"
   ]
 }
 
@@ -85,21 +80,21 @@ Resume content to roast:
 ${resumeText.slice(0, 4000)}
 ---`
 
-    // Call Claude API
-    const apiKey = process.env.ANTHROPIC_API_KEY
+    const apiKey = process.env.OPENROUTER_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: "API key not configured" }, { status: 500 })
     }
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://resumeroast-one.vercel.app",
+        "X-Title": "ResumeRoast",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "meta-llama/llama-3.3-70b-instruct:free",
         max_tokens: 1200,
         messages: [{ role: "user", content: prompt }],
       }),
@@ -107,14 +102,13 @@ ${resumeText.slice(0, 4000)}
 
     if (!response.ok) {
       const errText = await response.text()
-      console.error("Claude API error:", errText)
+      console.error("OpenRouter API error:", errText)
       return NextResponse.json({ error: "AI service error. Please try again." }, { status: 500 })
     }
 
     const data = await response.json()
-    const rawText = data.content?.[0]?.text ?? ""
+    const rawText = data.choices?.[0]?.message?.content ?? ""
 
-    // Parse JSON safely
     const jsonMatch = rawText.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
       console.error("No JSON found in response:", rawText)
