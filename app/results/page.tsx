@@ -2,13 +2,18 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
-interface Section { name: string; score: number; issue: string; fix: string }
-interface RoastResult { score: number; roast_line: string; sections: Section[]; rewrites: string[] }
+interface RoastResult {
+  overall_score: number;
+  roast_quote: string;
+  metrics: { ats_parsability_percent: number; quantified_bullets_percent: number; strong_action_verbs: number; weak_verbs: number; };
+  skill_gap: { inferred_role: string; detected_skills: string[]; missing_critical_skills: string[]; };
+  red_flags: Array<{ issue: string; severity: "High" | "Medium" | "Low" | string; fix: string; }>;
+  upsell_teaser: { weak_bullet_original: string; strong_bullet_rewrite: string; };
+}
 
 function ScoreRing({ score }: { score: number }) {
   const r = 48, circ = 2 * Math.PI * r
   const offset = circ - (score / 100) * circ
-  // Using exact hex colors matching tailwind config for SVG stroke
   const color = score < 40 ? "#ef4444" : score < 65 ? "#f59e0b" : score < 80 ? "#eab308" : "#22c55e"
   const label = score < 40 ? "Needs work" : score < 65 ? "Below average" : score < 80 ? "Good" : "Strong"
   return (
@@ -30,27 +35,15 @@ function ScoreRing({ score }: { score: number }) {
   )
 }
 
-function SectionCard({ s, i }: { s: Section; i: number }) {
-  const color = s.score < 40 ? "#ef4444" : s.score < 65 ? "#f59e0b" : s.score < 80 ? "#eab308" : "#22c55e"
+function MetricCard({ label, value, type, i }: { label: string, value: number | string, type: "good"|"bad"|"neutral", i: number }) {
+  let colorClass = "text-t2"; let bg = "bg-bg3"
+  if (type === "good") { colorClass = "text-green"; bg = "bg-green-bg/20 border-green/20" }
+  if (type === "bad") { colorClass = "text-red"; bg = "bg-red-bg/20 border-red/20" }
+
   return (
-    <div className="afu glass-panel rounded-2xl overflow-hidden interactive-hover" style={{ animationDelay:`${i*0.1}s` }}>
-      <div className="h-1 bg-bg4 w-full">
-        <div className="h-full rounded-r bg-current shadow-[0_0_10px_currentColor]" style={{ width:`${s.score}%`, color }} />
-      </div>
-      <div className="p-5">
-        <div className="flex justify-between items-center mb-4">
-          <span className="font-display text-sm font-semibold text-t1 tracking-tight">{s.name}</span>
-          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border" style={{ color, backgroundColor:`${color}12`, borderColor:`${color}25` }}>{s.score}</span>
-        </div>
-        <div className="mb-4">
-          <p className="font-mono text-[9px] text-t3 mb-1.5 tracking-widest uppercase">Problem</p>
-          <p className="text-sm text-t2 leading-relaxed">{s.issue}</p>
-        </div>
-        <div className="pt-4 border-t border-border">
-          <p className="font-mono text-[9px] text-accent mb-1.5 tracking-widest uppercase">Fix</p>
-          <p className="text-sm text-t1 leading-relaxed font-medium">{s.fix}</p>
-        </div>
-      </div>
+    <div className={`afu glass-panel rounded-xl p-4 flex flex-col justify-between interactive-hover ${bg}`} style={{ animationDelay:`${i*0.1}s` }}>
+      <p className="font-mono text-[9px] tracking-widest uppercase text-t3 mb-2">{label}</p>
+      <p className={`font-display text-2xl font-bold tracking-tight ${colorClass}`}>{value}</p>
     </div>
   )
 }
@@ -70,7 +63,7 @@ export default function ResultsPage() {
 
   const share = (p: "linkedin" | "x") => {
     if (!result) return
-    const text = `My resume scored ${result.score}/100 on ResumeRoast.ai\n\n"${result.roast_line}"\n\nGet yours reviewed free →`
+    const text = `My resume scored ${result.overall_score}/100 on ResumeRoast.ai\n\n"${result.roast_quote}"\n\nGet yours reviewed free →`
     const url = "https://resumeroast.ai"
     if (p === "linkedin") window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, "_blank")
     else window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank")
@@ -78,7 +71,7 @@ export default function ResultsPage() {
 
   const copy = () => {
     if (!result) return
-    navigator.clipboard.writeText(`My resume scored ${result.score}/100 on ResumeRoast.ai — "${result.roast_line}" — Get yours free at resumeroast.ai`)
+    navigator.clipboard.writeText(`My resume scored ${result.overall_score}/100 on ResumeRoast.ai — "${result.roast_quote}" — Get yours free at resumeroast.ai`)
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
@@ -106,14 +99,14 @@ export default function ResultsPage() {
 
       <div className="max-w-[700px] mx-auto px-4 py-12 md:py-16">
         {/* Score card */}
-        <div className="afu glass-panel rounded-3xl p-8 md:p-12 mb-8 flex flex-col items-center text-center gap-6 relative overflow-hidden shadow-2xl shadow-accent/5">
+        <div className="afu glass-panel rounded-3xl p-8 md:p-12 mb-10 flex flex-col items-center text-center gap-6 relative overflow-hidden shadow-2xl shadow-accent/5">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-accent opacity-[0.03] blur-[80px] rounded-full pointer-events-none" />
           
-          <ScoreRing score={result.score} />
+          <ScoreRing score={result.overall_score} />
           <div className="relative z-10">
             <p className="font-mono text-[9px] tracking-[0.2em] text-t3 mb-3 uppercase">Your Roast</p>
             <p className="font-display text-xl md:text-3xl font-bold text-t1 leading-relaxed md:leading-[1.4] tracking-tight italic max-w-lg">
-              &ldquo;{result.roast_line}&rdquo;
+              &ldquo;{result.roast_quote}&rdquo;
             </p>
           </div>
           <div className="flex gap-3 flex-wrap justify-center relative z-10 mt-2">
@@ -126,34 +119,69 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Breakdown */}
-        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1">Breakdown</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          {result.sections.map((sec, i) => <SectionCard key={sec.name} s={sec} i={i} />)}
+        {/* Metrics Grid */}
+        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1">Key Metrics</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+          <MetricCard i={0} label="ATS Readability" value={`${result.metrics.ats_parsability_percent}%`} type={result.metrics.ats_parsability_percent > 75 ? "good" : "bad"} />
+          <MetricCard i={1} label="Quantified Output" value={`${result.metrics.quantified_bullets_percent}%`} type={result.metrics.quantified_bullets_percent > 30 ? "neutral" : "bad"} />
+          <MetricCard i={2} label="Action Verbs" value={result.metrics.strong_action_verbs} type="good" />
+          <MetricCard i={3} label="Weak Verbs" value={result.metrics.weak_verbs} type={result.metrics.weak_verbs > 5 ? "bad" : "neutral"} />
         </div>
 
-        {/* Rewrites */}
-        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1">Quick wins — rewrites</p>
-        <div className="flex flex-col gap-4">
-          {result.rewrites.map((r, i) => {
-            const parts = r.split(/->|→/)
-            const before = parts[0]?.replace(/^Before:/i, "").trim()
-            const after  = parts[1]?.replace(/^After:/i,  "").trim()
+        {/* Skill Gap Analysis */}
+        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1 mt-6">Skill Gap: {result.skill_gap.inferred_role}</p>
+        <div className="afu glass-panel rounded-2xl p-6 mb-10 border border-border/60" style={{ animationDelay: '0.2s' }}>
+          <div className="mb-6">
+            <p className="text-xs font-semibold text-t3 mb-3 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green" /> Detected Skills</p>
+            <div className="flex flex-wrap gap-2">
+              {result.skill_gap.detected_skills.map((s, i) => (
+                <span key={i} className="text-xs px-3 py-1 rounded-md bg-green-bg/20 text-green border border-green/20">{s}</span>
+              ))}
+              {result.skill_gap.detected_skills.length === 0 && <span className="text-xs text-t3 italic">No core skills detected</span>}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-t3 mb-3 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red" /> Missing Industry Standards</p>
+            <div className="flex flex-wrap gap-2">
+              {result.skill_gap.missing_critical_skills.map((s, i) => (
+                <span key={i} className="text-xs px-3 py-1 rounded-md bg-red-bg/20 text-red border border-red/20 flex items-center gap-1.5"><span className="opacity-60">+</span> {s}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Red Flags List */}
+        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1">Red Flags Review</p>
+        <div className="flex flex-col gap-3 mb-10">
+          {result.red_flags.map((flag, i) => {
+            const isHigh = flag.severity.toLowerCase() === "high";
             return (
-              <div key={i} className="afu glass-panel rounded-2xl overflow-hidden shadow-lg shadow-black/20" style={{ animationDelay:`${i*0.1}s` }}>
-                <div className="p-5 md:p-6 bg-red-bg/50 border-b border-border/50">
-                  <p className="font-mono text-[9px] text-red tracking-widest uppercase mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red animate-pulse" /> Before</p>
-                  <p className="text-sm text-t2 leading-relaxed">{before || r}</p>
+              <div key={i} className="afu glass-panel rounded-xl p-5 border-l-4 overflow-hidden relative interactive-hover" style={{ animationDelay:`${i*0.1 + 0.3}s`, borderLeftColor: isHigh ? "#ef4444" : "#f59e0b" }}>
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-display text-sm font-semibold text-t1">{flag.issue}</span>
+                  <span className="font-mono text-[9px] uppercase px-2 py-0.5 rounded-sm border font-bold" style={{ borderColor: isHigh ? "#ef444440" : "#f59e0b40", color: isHigh ? "#ef4444" : "#f59e0b", backgroundColor: isHigh ? "#ef444410" : "#f59e0b10" }}>
+                    {flag.severity}
+                  </span>
                 </div>
-                {after && (
-                  <div className="p-5 md:p-6 bg-green-bg/30">
-                    <p className="font-mono text-[9px] text-green tracking-widest uppercase mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" /> After</p>
-                    <p className="text-sm text-t1 font-medium leading-relaxed">{after}</p>
-                  </div>
-                )}
+                <div className="mt-3 pt-3 border-t border-border/50">
+                  <p className="text-xs text-t2 leading-relaxed"><strong className="text-t1 font-medium font-mono text-[10px] tracking-widest uppercase mr-2 opacity-70">FIX:</strong> {flag.fix}</p>
+                </div>
               </div>
             )
           })}
+        </div>
+
+        {/* Upsell Teaser */}
+        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1">Quick Win Rewrite</p>
+        <div className="afu glass-panel rounded-2xl overflow-hidden shadow-lg shadow-black/20 mb-8 border border-border/60" style={{ animationDelay: '0.5s' }}>
+          <div className="p-5 md:p-6 bg-red-bg/10 border-b border-border/40 relative">
+            <p className="font-mono text-[9px] text-red tracking-widest uppercase mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red animate-pulse" /> Before</p>
+            <p className="text-sm text-t2 leading-relaxed italic">&ldquo;{result.upsell_teaser.weak_bullet_original}&rdquo;</p>
+          </div>
+          <div className="p-5 md:p-6 bg-green-bg/10 relative">
+            <p className="font-mono text-[9px] text-green tracking-widest uppercase mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" /> After</p>
+            <p className="text-sm text-t1 font-medium leading-relaxed">{result.upsell_teaser.strong_bullet_rewrite}</p>
+          </div>
         </div>
       </div>
 
@@ -161,11 +189,11 @@ export default function ResultsPage() {
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-[#09090b]/80 backdrop-blur-xl px-6 py-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
         <div className="max-w-[700px] mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="font-display text-sm font-bold text-t1 tracking-tight">Want every section fully rewritten?</p>
-            <p className="text-xs text-t3 mt-1">Deep Roast — full rewrite + cover letter + LinkedIn &middot; One-time</p>
+            <p className="font-display text-sm font-bold text-t1 tracking-tight">Want an elite resume rewrite?</p>
+            <p className="text-xs text-t3 mt-1">Deep Roast — full rewrite + ATS optimization + Cover Letter &middot; One-time</p>
           </div>
           <a href="mailto:hello@resumeroast.ai?subject=Deep Roast" className="px-6 py-3 rounded-xl bg-accent text-white font-display text-sm font-bold tracking-tight shadow-[0_0_20px_rgba(255,79,42,0.4)] interactive-hover whitespace-nowrap">
-            Get Deep Roast — $9
+            Unlock Full Rewrite — $29
           </a>
         </div>
       </div>
