@@ -8,23 +8,24 @@ interface RoastResult { score: number; roast_line: string; sections: Section[]; 
 function ScoreRing({ score }: { score: number }) {
   const r = 48, circ = 2 * Math.PI * r
   const offset = circ - (score / 100) * circ
+  // Using exact hex colors matching tailwind config for SVG stroke
   const color = score < 40 ? "#ef4444" : score < 65 ? "#f59e0b" : score < 80 ? "#eab308" : "#22c55e"
   const label = score < 40 ? "Needs work" : score < 65 ? "Below average" : score < 80 ? "Good" : "Strong"
   return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
-      <div style={{ position:"relative", width:120, height:120 }}>
-        <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform:"rotate(-90deg)" }}>
-          <circle cx="60" cy="60" r={r} fill="none" stroke="var(--bg4)" strokeWidth="7" />
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative w-[120px] h-[120px]">
+        <svg width="120" height="120" viewBox="0 0 120 120" className="-rotate-90">
+          <circle cx="60" cy="60" r={r} fill="none" className="stroke-bg4" strokeWidth="7" />
           <circle cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="7"
             strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-            className="ring" style={{ filter:`drop-shadow(0 0 8px ${color}50)` }} />
+            className="animate-ring-fill" style={{ filter:`drop-shadow(0 0 12px ${color}80)` }} />
         </svg>
-        <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
-          <span className="font-display" style={{ fontSize:32, fontWeight:700, color:"var(--t1)", lineHeight:1, letterSpacing:"-0.03em" }}>{score}</span>
-          <span className="font-mono" style={{ fontSize:10, color:"var(--t3)", marginTop:2 }}>/ 100</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="font-display text-3xl font-bold text-t1 leading-none tracking-tighter" style={{ textShadow: `0 0 20px ${color}60` }}>{score}</span>
+          <span className="font-mono text-[10px] text-t3 mt-0.5">/ 100</span>
         </div>
       </div>
-      <span className="font-mono" style={{ fontSize:10, fontWeight:500, color, letterSpacing:"0.07em", textTransform:"uppercase", background:`${color}15`, padding:"3px 10px", borderRadius:100, border:`0.5px solid ${color}30` }}>{label}</span>
+      <span className="font-mono text-[10px] font-semibold tracking-widest uppercase px-3 py-1 rounded-full border" style={{ color, backgroundColor: `${color}15`, borderColor: `${color}30` }}>{label}</span>
     </div>
   )
 }
@@ -32,22 +33,22 @@ function ScoreRing({ score }: { score: number }) {
 function SectionCard({ s, i }: { s: Section; i: number }) {
   const color = s.score < 40 ? "#ef4444" : s.score < 65 ? "#f59e0b" : s.score < 80 ? "#eab308" : "#22c55e"
   return (
-    <div className="afu" style={{ animationDelay:`${i*0.07}s`, background:"var(--bg2)", border:"0.5px solid var(--border2)", borderRadius:13, overflow:"hidden" }}>
-      <div style={{ height:2, background:"var(--bg4)" }}>
-        <div style={{ width:`${s.score}%`, height:"100%", background:color, borderRadius:2 }} />
+    <div className="afu glass-panel rounded-2xl overflow-hidden interactive-hover" style={{ animationDelay:`${i*0.1}s` }}>
+      <div className="h-1 bg-bg4 w-full">
+        <div className="h-full rounded-r bg-current shadow-[0_0_10px_currentColor]" style={{ width:`${s.score}%`, color }} />
       </div>
-      <div style={{ padding:"15px 16px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:11 }}>
-          <span className="font-display" style={{ fontSize:12, fontWeight:600, color:"var(--t1)", letterSpacing:"-0.01em" }}>{s.name}</span>
-          <span className="font-mono" style={{ fontSize:10, fontWeight:700, color, background:`${color}12`, padding:"2px 7px", borderRadius:5, border:`0.5px solid ${color}25` }}>{s.score}</span>
+      <div className="p-5">
+        <div className="flex justify-between items-center mb-4">
+          <span className="font-display text-sm font-semibold text-t1 tracking-tight">{s.name}</span>
+          <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border" style={{ color, backgroundColor:`${color}12`, borderColor:`${color}25` }}>{s.score}</span>
         </div>
-        <div style={{ marginBottom:10 }}>
-          <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", marginBottom:3, letterSpacing:"0.06em" }}>PROBLEM</p>
-          <p style={{ fontSize:12, color:"var(--t2)", lineHeight:1.55, fontFamily:"Inter,sans-serif" }}>{s.issue}</p>
+        <div className="mb-4">
+          <p className="font-mono text-[9px] text-t3 mb-1.5 tracking-widest uppercase">Problem</p>
+          <p className="text-sm text-t2 leading-relaxed">{s.issue}</p>
         </div>
-        <div style={{ paddingTop:10, borderTop:"0.5px solid var(--border)" }}>
-          <p className="font-mono" style={{ fontSize:9, color:"var(--accent)", marginBottom:3, letterSpacing:"0.06em" }}>FIX</p>
-          <p style={{ fontSize:12, color:"var(--t1)", lineHeight:1.55, fontWeight:500, fontFamily:"Inter,sans-serif" }}>{s.fix}</p>
+        <div className="pt-4 border-t border-border">
+          <p className="font-mono text-[9px] text-accent mb-1.5 tracking-widest uppercase">Fix</p>
+          <p className="text-sm text-t1 leading-relaxed font-medium">{s.fix}</p>
         </div>
       </div>
     </div>
@@ -81,71 +82,73 @@ export default function ResultsPage() {
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
-  const navBtn = { fontSize:12, color:"var(--t2)", padding:"6px 14px", borderRadius:8, border:"0.5px solid var(--border2)", background:"var(--bg3)", cursor:"pointer", fontFamily:"Inter,sans-serif" }
-
   if (!mounted || !result) return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ textAlign:"center" }}>
-        <div className="spin" style={{ width:32, height:32, border:"2px solid var(--border2)", borderTopColor:"var(--accent)", borderRadius:"50%", margin:"0 auto 14px" }} />
-        <p style={{ fontSize:13, color:"var(--t3)", fontFamily:"Inter,sans-serif" }}>Loading your results...</p>
+    <div className="min-h-screen flex items-center justify-center bg-bg">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-border2 border-t-accent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-sm text-t3 font-medium tracking-wide">Loading your results...</p>
       </div>
     </div>
   )
 
   return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)" }}>
-      <nav style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"15px 28px", borderBottom:"0.5px solid var(--border)", background:"rgba(12,12,11,0.92)", backdropFilter:"blur(16px)", position:"sticky", top:0, zIndex:50 }}>
-        <button onClick={() => router.push("/")} style={{ display:"flex", alignItems:"center", gap:9, background:"none", border:"none", cursor:"pointer", padding:0 }}>
-          <div style={{ width:26, height:26, borderRadius:7, background:"var(--accent)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13 }}>🔥</div>
-          <span className="font-display" style={{ fontWeight:700, fontSize:14, color:"var(--t1)", letterSpacing:"-0.02em" }}>ResumeRoast</span>
+    <div className="min-h-screen bg-bg pb-24">
+      <nav className="glass-panel sticky top-0 z-50 flex items-center justify-between px-6 md:px-8 py-4 border-b-0 border-x-0 border-t-0">
+        <button onClick={() => router.push("/")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <div className="w-7 h-7 rounded-md bg-accent text-accent-fg flex items-center justify-center text-sm shadow-[0_0_10px_rgba(255,79,42,0.4)]">🔥</div>
+          <span className="font-display font-bold text-sm tracking-tight text-white">ResumeRoast</span>
         </button>
-        <div style={{ display:"flex", gap:8 }}>
-          <button onClick={copy} style={navBtn}>{copied ? "✓ Copied" : "Copy score"}</button>
-          <button onClick={() => router.push("/")} style={navBtn}>← New resume</button>
+        <div className="flex gap-3">
+          <button onClick={copy} className="text-xs text-t2 px-4 py-2 rounded-lg border border-border2 bg-bg3 interactive-hover font-medium">{copied ? "✓ Copied" : "Copy score"}</button>
+          <button onClick={() => router.push("/")} className="text-xs text-t2 px-4 py-2 rounded-lg border border-border2 bg-bg3 interactive-hover font-medium hidden sm:block">← New resume</button>
         </div>
       </nav>
 
-      <div style={{ maxWidth:700, margin:"0 auto", padding:"40px 20px 130px" }}>
-
+      <div className="max-w-[700px] mx-auto px-4 py-12 md:py-16">
         {/* Score card */}
-        <div className="afu" style={{ background:"var(--bg2)", border:"0.5px solid var(--border2)", borderRadius:16, padding:"36px 28px", marginBottom:14, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", gap:20 }}>
+        <div className="afu glass-panel rounded-3xl p-8 md:p-12 mb-8 flex flex-col items-center text-center gap-6 relative overflow-hidden shadow-2xl shadow-accent/5">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-accent opacity-[0.03] blur-[80px] rounded-full pointer-events-none" />
+          
           <ScoreRing score={result.score} />
-          <div>
-            <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", letterSpacing:"0.08em", marginBottom:8 }}>YOUR ROAST</p>
-            <p className="font-display" style={{ fontSize:"clamp(16px,2.5vw,22px)", fontWeight:600, fontStyle:"italic", color:"var(--t1)", lineHeight:1.4, letterSpacing:"-0.01em", maxWidth:500 }}>
+          <div className="relative z-10">
+            <p className="font-mono text-[9px] tracking-[0.2em] text-t3 mb-3 uppercase">Your Roast</p>
+            <p className="font-display text-xl md:text-3xl font-bold text-t1 leading-relaxed md:leading-[1.4] tracking-tight italic max-w-lg">
               &ldquo;{result.roast_line}&rdquo;
             </p>
           </div>
-          <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
-            {[{ label:"Share on LinkedIn", p:"linkedin" as const }, { label:"Share on X", p:"x" as const }].map(({ label, p }) => (
-              <button key={p} onClick={() => share(p)} style={{ padding:"8px 16px", borderRadius:9, border:"0.5px solid var(--border2)", background:"var(--bg3)", cursor:"pointer", fontSize:12, color:"var(--t2)", fontFamily:"Inter,sans-serif" }}>{label}</button>
+          <div className="flex gap-3 flex-wrap justify-center relative z-10 mt-2">
+            {[
+              { label:"Share on LinkedIn", p:"linkedin" as const }, 
+              { label:"Share on X", p:"x" as const }
+            ].map(({ label, p }) => (
+              <button key={p} onClick={() => share(p)} className="px-5 py-2.5 rounded-lg border border-border2 bg-bg3 hover:bg-bg4 interactive-hover text-xs text-t2 font-medium transition-colors">{label}</button>
             ))}
           </div>
         </div>
 
         {/* Breakdown */}
-        <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:10, paddingLeft:2 }}>Breakdown</p>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(270px,1fr))", gap:8, marginBottom:14 }}>
+        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1">Breakdown</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
           {result.sections.map((sec, i) => <SectionCard key={sec.name} s={sec} i={i} />)}
         </div>
 
         {/* Rewrites */}
-        <p className="font-mono" style={{ fontSize:9, color:"var(--t3)", letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:10, paddingLeft:2 }}>Quick wins — rewrites</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+        <p className="font-mono text-[9px] tracking-[0.2em] text-t3 uppercase mb-4 ml-1">Quick wins — rewrites</p>
+        <div className="flex flex-col gap-4">
           {result.rewrites.map((r, i) => {
             const parts = r.split(/->|→/)
             const before = parts[0]?.replace(/^Before:/i, "").trim()
             const after  = parts[1]?.replace(/^After:/i,  "").trim()
             return (
-              <div key={i} className="afu" style={{ animationDelay:`${i*0.08}s`, background:"var(--bg2)", border:"0.5px solid var(--border2)", borderRadius:13, overflow:"hidden" }}>
-                <div style={{ padding:"14px 16px", background:"rgba(239,68,68,0.05)", borderBottom:"0.5px solid var(--border)" }}>
-                  <p className="font-mono" style={{ fontSize:9, color:"var(--red)", letterSpacing:"0.06em", marginBottom:5 }}>BEFORE</p>
-                  <p style={{ fontSize:13, color:"var(--t2)", lineHeight:1.55, fontFamily:"Inter,sans-serif" }}>{before || r}</p>
+              <div key={i} className="afu glass-panel rounded-2xl overflow-hidden shadow-lg shadow-black/20" style={{ animationDelay:`${i*0.1}s` }}>
+                <div className="p-5 md:p-6 bg-red-bg/50 border-b border-border/50">
+                  <p className="font-mono text-[9px] text-red tracking-widest uppercase mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red animate-pulse" /> Before</p>
+                  <p className="text-sm text-t2 leading-relaxed">{before || r}</p>
                 </div>
                 {after && (
-                  <div style={{ padding:"14px 16px", background:"rgba(34,197,94,0.04)" }}>
-                    <p className="font-mono" style={{ fontSize:9, color:"var(--green)", letterSpacing:"0.06em", marginBottom:5 }}>AFTER</p>
-                    <p style={{ fontSize:13, color:"var(--t1)", lineHeight:1.55, fontWeight:500, fontFamily:"Inter,sans-serif" }}>{after}</p>
+                  <div className="p-5 md:p-6 bg-green-bg/30">
+                    <p className="font-mono text-[9px] text-green tracking-widest uppercase mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" /> After</p>
+                    <p className="text-sm text-t1 font-medium leading-relaxed">{after}</p>
                   </div>
                 )}
               </div>
@@ -155,13 +158,13 @@ export default function ResultsPage() {
       </div>
 
       {/* Sticky upgrade */}
-      <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:40, borderTop:"0.5px solid var(--border)", background:"rgba(12,12,11,0.96)", backdropFilter:"blur(20px)", padding:"14px 24px" }}>
-        <div style={{ maxWidth:700, margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-[#09090b]/80 backdrop-blur-xl px-6 py-4 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <div className="max-w-[700px] mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="font-display" style={{ fontSize:13, fontWeight:700, color:"var(--t1)", letterSpacing:"-0.01em" }}>Want every section fully rewritten?</p>
-            <p style={{ fontSize:11, color:"var(--t3)", marginTop:2, fontFamily:"Inter,sans-serif" }}>Deep Roast — full rewrite + cover letter + LinkedIn headline · One-time</p>
+            <p className="font-display text-sm font-bold text-t1 tracking-tight">Want every section fully rewritten?</p>
+            <p className="text-xs text-t3 mt-1">Deep Roast — full rewrite + cover letter + LinkedIn &middot; One-time</p>
           </div>
-          <a href="mailto:hello@resumeroast.ai?subject=Deep Roast" style={{ padding:"11px 22px", borderRadius:10, border:"none", background:"var(--accent)", color:"white", fontSize:13, fontWeight:700, textDecoration:"none", letterSpacing:"-0.01em", whiteSpace:"nowrap", fontFamily:"DM Sans,sans-serif", boxShadow:"0 2px 12px rgba(255,68,34,0.3)" }}>
+          <a href="mailto:hello@resumeroast.ai?subject=Deep Roast" className="px-6 py-3 rounded-xl bg-accent text-white font-display text-sm font-bold tracking-tight shadow-[0_0_20px_rgba(255,79,42,0.4)] interactive-hover whitespace-nowrap">
             Get Deep Roast — $9
           </a>
         </div>
