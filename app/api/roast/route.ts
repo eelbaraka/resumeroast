@@ -51,26 +51,26 @@ export async function POST(req: NextRequest) {
     const resumeText = extractTextFromPDF(buffer)
 
     if (!resumeText || resumeText.trim().length < 30) {
-      return NextResponse.json({ error: "Could not read your PDF." }, { status: 400 })
+      return NextResponse.json({ error: "Could not read your PDF. Please use a text-based PDF." }, { status: 400 })
     }
 
-    const prompt = `You are a brutally honest career coach. Roast this resume hard but make every critique actionable.
+    const prompt = `You are a brutally honest but genuinely helpful career coach. Analyze this resume and provide honest, specific, actionable feedback.
 
-Respond ONLY with raw JSON, no markdown, no backticks, no explanation:
+Respond ONLY with a raw JSON object. No markdown, no code blocks, no explanation — just JSON:
 
 {
-  "score": <integer 0-100>,
-  "roast_line": "<one brutal punchy sentence about the biggest flaw>",
+  "score": <integer 0-100, honest score — most resumes are 40-70>,
+  "roast_line": "<one sharp, specific sentence capturing the resume's biggest weakness>",
   "sections": [
-    { "name": "Clarity", "score": <0-100>, "issue": "<specific problem>", "fix": "<specific fix>" },
-    { "name": "ATS Score", "score": <0-100>, "issue": "<specific problem>", "fix": "<specific fix>" },
-    { "name": "Impact", "score": <0-100>, "issue": "<specific problem>", "fix": "<specific fix>" },
-    { "name": "Red Flags", "score": <0-100>, "issue": "<specific problem>", "fix": "<specific fix>" }
+    { "name": "Clarity", "score": <0-100>, "issue": "<specific problem in THIS resume>", "fix": "<concrete actionable fix>" },
+    { "name": "ATS Score", "score": <0-100>, "issue": "<specific ATS/keyword problem>", "fix": "<specific fix with example>" },
+    { "name": "Impact", "score": <0-100>, "issue": "<specific weak language or missing metrics>", "fix": "<before/after example>" },
+    { "name": "Red Flags", "score": <0-100, higher = fewer flags>, "issue": "<specific red flag found>", "fix": "<how to fix it>" }
   ],
   "rewrites": [
-    "Before: <weak bullet from resume> -> After: <improved version with metrics>",
-    "Before: <weak bullet> -> After: <improved>",
-    "Before: <weak bullet> -> After: <improved>"
+    "Before: <actual weak bullet from resume> -> After: <stronger version with metrics and action verb>",
+    "Before: <another weak bullet> -> After: <improved version>",
+    "Before: <another weak bullet> -> After: <improved version>"
   ]
 }
 
@@ -102,11 +102,11 @@ ${resumeText.slice(0, 4000)}`
     const data = await response.json()
     const rawText = data.choices?.[0]?.message?.content ?? ""
     const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return NextResponse.json({ error: "Could not parse response." }, { status: 500 })
+    if (!jsonMatch) return NextResponse.json({ error: "Could not parse response. Try again." }, { status: 500 })
 
     return NextResponse.json(JSON.parse(jsonMatch[0]))
   } catch (error) {
     console.error("Roast error:", error)
-    return NextResponse.json({ error: "Something went wrong." }, { status: 500 })
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 })
   }
 }
