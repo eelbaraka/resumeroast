@@ -107,7 +107,7 @@ ${resumeText.slice(0, 4000)}`
         "X-Title": "ResumeRoast",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-exp:free",
+        model: "mistralai/mistral-7b-instruct:free",
         max_tokens: 1200,
         messages: [{ role: "user", content: prompt }],
       }),
